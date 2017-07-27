@@ -96,13 +96,19 @@ git diff redme.txt
 git log --pretty=online 	
 		显示从最近到最远的提交日志,
 
+git log --graph 
+
 git reset --hard HEAD_ID
 		回退到上一个HEAD版本
 
+删除远程分支和tag
+	
+	git push origin --delete <branchName>
 
+	git push origin --delete <tagname>
 
+	git remote show origin 
 
-
-
+	git fetch -p 		# fetch之后删除没有与远程分支对应的本地分支
 
 
