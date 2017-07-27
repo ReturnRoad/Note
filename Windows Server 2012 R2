@@ -1,0 +1,45 @@
+Windows Server 2012 R2
+
+
+
+使用netsh配置ip地址
+
+	netsh interface ip set address name="Local Area Connection" static 192.168.1.50 255.255.255.0 192.168.1.1
+	netsh interface ip set dns "Local Area Connection" static 192.168.1.21
+	netsh interface ip add dns "Local Area Connection" 192.168.1.22 
+
+
+
+
+
+重命名计算机
+	
+	netdom /renamecomputer <Old_WindowsName> /newname:<New_WindowsName>
+
+加入域
+	
+	netdom join <name of computer joining domain> /Domain:<domain to be joined> /UserD:<name of domain user with permission to join the domain> /PasswordD:*
+	/REBoot 	#加入此标识可自动重启
+
+
+便捷的管理工具集
+	
+	sconfig
+
+
+使用PowerShell安装角色
+
+	import-module Servermanager 		#加载ServerManager相关的模块
+	Get-WindowsFeature
+
+	安装Ftp Service
+		Install-WindowsFeature -Name Web-Ftp-Server -Restart 
+		Get-WindowsFeature > c:\InstalledFeature.txt
+
+	-whatif
+		add-windowsfeature File-Services,FS-Resource-Manager -whatif
+
+查看服务器是否运行Power Shell脚本
+	get-executionpolicy
+
+	set-executionpolicy unrestricted		

@@ -1,0 +1,608 @@
+Docker
+
+Registry hub
+registry.hub.docker.com
+
+docker images --filter "dangling=true"  # --notrunc
+docker images --filter "dangling=true" -q | xargs docker rmi
+
+
+Docker CE
+
+	sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+	sudo yum-config-manager --enable extras
+
+	sudo yum-config-manager \
+		--add-repo \
+		https://download.docker.com/linux/centos/docker-ce.repo
+
+	sudo yum-config-manager --enable docker-ce-edge
+
+	sudo yum-config-manager --disable docker-ce-edge
+
+	yum list docker-ce.x86_64  --showduplicates |sort -r
+
+	sudo yum install docker-ce-<VERSION>
+
+
+Start Docker
+	sudo systemctl start docker
+	sudo docker run hello-world
+
+docker run -d -p 2222:22 --name base csphere/centos:7.1
+ 
+docker search localhost:5000/ubuntu 
+
+docker pull/push localhost:5000/official/ubuntu:14.04
+
+docker daemon -D -s overlay -g /var/lib/docker
+# 使用overlay驱动对Docker Image的组织结构进行分析，首先需要启动Docker Daemon
+docker pull busybox
+
+
+docker history busybox
+
+docker run -d --hostname localhost --name registry-v2 \
+	-v /opt/data/distribution:/var/lib/registry/docker/registry/v2 \
+	-p 5000:5000 registry:2.0
+# 构建私有docker registry
+
+docker run --net=none -ti ubuntu:latest ip addr show 
+
+docker run -h dockerNet --dns 8.8.4.4 -tid ubuntu:latest bash 
+docker exec -ti IMAGESID bash
+
+
+
+
+Docker daemon示例
+	dockerd -H tcp://192.168.1.18:6000 -H unix:///var/run/docker.sock --fixed-cidr=172.17.1.0/24 --icc=false --userland-proxy=false
+		--icc=false 					禁止容器间通信
+		--userland-proxy=false			禁止使用用户态proxy，即不派生docker-proxy进程用于端口映射
+
+	iptables -vnL -t filter
+
+Docker client 
+	docker run -ti d --net=bridge -p :10000:22/tcp -h docker centos:latest bash
+	docker ps
+	docker exec -ti IMAGESID bash 	
+
+link的使用
+Host1	
+	docker run -tid --name=c1 centos:7 bash
+	docker exec -ti IMAGESID bash
+Host2
+	docker run -tid --link=c1:alias_c1 --name=c2 centos:7 bash
+	ping alias_c1
+	cat /etc/hosts 
+
+
+Docker卷管理
+	docker run -d -v /tmp/data:/data --name busyboxtest busybox 
+	docker run -d -v /root:/tmp/:ro --name centostest centos:7
+	docker run -d -v [sourcedir]:[destinationdir]:[options] --name centostest centos:7
+
+	创建数据卷容器
+	docker create -v /dbdata --name dbata training/postgres /bin/true 
+	docker run -d --volumes-from dbata --name db1 training/postgres 
+	docker run -d --volumes-from dbata --name db2 training/postgres
+
+	docker run -d --name db3 --volumes-from db1 training/postgres
+
+	删除最后一个容器卷
+	docker rm -v $CONTAINER
+
+	docker rmi $CONTAINER
+
+	docker run --rm --volumes-from dbata -v $(pwd):/backup ubuntu tar cvf /backup/backup.tar /dbata 
+
+
+
+
+
+
+
+
+Docker API 
+	unix:///var/run/docker.sock
+
+	vim /etc/sysconfig/docker
+		other_args="-H tcp://0.0.0.0:5678 -H unix:///var/run/docker.sock"
+
+	docker -H localhost:5678 version 			对localhost:5678端口发送docker version命令检查
+	curl -X GET http://localhost:5678/_ping
+	# 如果返回错误可以尝试对 $no_proxy 变量进行修改检查 $no_proxy,$NO_PROXY
+
+Endpoint-----GET /images/json
+CLI-----docker images
+
+	docker run -ti ubuntu:14.04
+		echo "HelloWorld" > /root/sayhi
+
+	curl -k -X POST http://localhost:5678/containers/IMAGESID/copy \
+-H "Content-Type: application/json" -d '{"Resource":"/root/sayhi"}' | tar x
+
+	curl -k -X POST http://localhost:5678/containers/IMAGESID/copy \
+-H "Content-Type: application/json" -d '{"Resource":"/root/sayhi"}' > tempfile
+
+
+
+
+Endpoint-----POST /containers/(container_id)/copy
+CLI-----docker cp
+
+	docker run -ti ubuntu:14:04
+		touch sayhi
+		echo hello > sayhi
+
+	curl -k -X POST http://localhost:5678/containers/CONTAINER ID/copy \
+-H "Content-Type: application/json" -d '{"Resource":"/sayhi"}' | tar x 
+
+	curl -k -X POST http://localhost:5678/containers/CONTAINER ID/copy \
+-H "Content-Type: application/json" -d '{"Resource":"/sayhi"}' > tempfile
+
+
+
+
+
+
+
+
+场景实现
+1.使用dockerfile构建镜像
+
+	./server.py
+
+	curl -XGET http://10.107.197.208:22222
+
+
+
+FROM ubuntu:12.04
+ADD server.py /bin/
+EXPOSE 22222
+CMD ["server.py"]
+
+
+
+
+安全策略
+	cgroup
+	CPU限制
+	docker run --rm -ti -c 100 ubuntu bash 			#设置容器的CPU比重为100
+	docker run --rm -ti --cpu-period=500000 --cpu-quota=250000 ubuntu /bin/bash
+	docker run -it --rm --cpuset-cpus=0,1 ubuntu bash
+	内存限制
+	docker run --rm -ti -m 200M ubuntu bash	 # only memory 
+		--memory-swap 	# memory+swap 
+	块设备限制
+	docker run --rm -ti --name=container1 ubuntu bash 
+		dd if=/dev/zero of=testfile0 bs=8k count=5000 oflag=diect 
+
+	mount | grep CONTANIER ID
+	echo '253:4 10240000' > /sys/fs/cgroup/blkio/system.slice/docker-CONTAINER ID
+		dd if=/dev/zero of=testfile0 bs=8k count=5000 oflag=diect 
+
+	ulimit 
+		docker daemon --default-ulimit cpu=1200
+
+		docker run --rm -ti --umit cpu=1200 ubuntu bash
+
+
+日志审计
+		logs: none,json-file,syslog,gelf,fluentd
+	docker run -ti --rm --log-driver="syslog" ubuntu bash
+	docker inspect CONTANER ID
+	只用json-file支持docker logs命令
+
+
+
+
+
+
+
+
+
+
+
+
+
+dockerfile 
+
+# This Dockerfile uses the ubuntu image
+# VERSION 2 - EDITION 1 
+# Author: tester 
+
+FROM ubuntu
+
+MAINTAINE tester tester@huawei.com
+
+RUN echo "deb http://archive.ubuntu.com/ubuntu/ raring main universe" >> /etc/apt/sources.list
+RUN apt-get update && apt-get install -y nginx 
+RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf 
+
+CMD /usr/sbin/nginx
+
+docker指令
+	
+	FROM 
+		FROM <image> 	FROM <image>:<tag>
+	Dockerfile的第一条必须是FROM,用来指定要制作的镜像继承自哪个镜像
+
+	MAINTAINER 
+		MAINTAINER <name>
+	用来指定维护者的信息
+
+	RUN 
+		RUN <command>	RUN ["executable","param1","param2"...]
+	用来执行shell命令，翻译为  /bin/sh -c xxx 	xxx为RUN后的命令
+
+	EXPOSE 
+		EXPOSE <port>
+	用来将容器中的端口暴露出来，docker run -p 等同
+
+	CMD
+		CMD ["executable","param1","param2"] 使用exec执行
+		CMD command param1 param2 	在/bin/sh中执行
+		CMD ["param1","param2"] 	提供给ENTRYPOINT的默认参数
+	指定启动容器时执行的命令，每个Dockerfile只能有一个CMD命令。
+
+	ENTRYPOINT
+		ENTRYPOINT ["executable","param1","param2"]       PID 不同
+		ENTRYPOINT command param1 param2 	SHELL中执行
+	每个Dockerfile中只能有一个ENTRY POINT
+		docke run -it --entrypoint=/bin/bash csphere/ent:0.1
+
+	VOLUME 
+		VOLUME ["/data"]
+	创建一个可以从本地主机或者其他容器挂载的挂载点。如果和host共享目录，DockerFile中必须先创建一个挂载点，然后
+	在启动的时候 docker run -v $HOSTPATH:$CONTAINERPATH 来挂载,CONTAINER PATH就是挂载点
+
+	ENV 
+		ENV <key> <value>
+	制定一个环境变量，会被RUN指令使用，在容器运行时保持
+
+	ADD
+		ADD <src> <dest>
+	将复制指定的<src>到容器中的<dest>.其中<src>可以是Dockerfile所在目录的相对路径,也可以是一个URL或者tar文件
+
+	COPY
+		COPY <src> <dest>
+	复制本地主机的<src> (为Docekerfile所在目录的相对路径)到容器中的<dest>
+
+	ONBUILD ADD . /app
+	ONBUILD RUN chown -R nginx:nginx /app 
+		在下一个基于此的镜像生效
+
+#  This Dockerfile uses the busybox image
+#  VERSION 1 - EDITION 1 
+#  Author:tester
+FROM busybox:latest 
+RUN  date;sleep 100;date
+RUN  echo "abc" > /mytest
+RUN  date;sleep 100;date
+CMD /bin/sh
+
+docker build /root -t busybox:v1
+
+docker pull tomcat:7.0-jre8
+docker pull -a tomcat 			#拉取所有tomcat
+
+
+
+
+制作HTTPS服务器镜像
+
+1.生成HTTPS需要的证书（需要安装JDK）
+mkdir ssl
+cd ssl/
+keytool -genkey -alias tomcat -keyalg RSA -keystore tomcat.keystore
+
+docker run -ti -v $(pwd):/tmp tomcat:7.0-jre8 bash 
+
+
+
+Docker-COMPOSE
+
+docker-compose.yml 
+
+dockerbkservice:						#顶级标签表示一个镜像
+	build:misc/bkservice				#使用docker-compose build命令时会去哪个目录构建这个镜像
+	links:								#制定与其他容器的链接，可以使容器以域名的方式访问另一个容器
+	- dockerauth:dockerauth				
+	- dockersql:dockersql
+	volumes:							#将host主机上的某个路径挂载到容器中的某个路径
+	- ./config.yml:/usr/local/bkservice/config.yml
+	ports:								#将host端口映射到容器中的某个端口
+	- "9090:9090"				
+	environment:						#设置一个环境变量
+	- MACHINE_CLIENT_CERT_PATH=/root/.docker/machine/certs
+
+
+docker-compose rm --force 		#删除镜像，主要是上次遗留的
+docker-compose ps 			#查看容器
+
+docker-compose build 
+docker-compose up -d 			#以后台方式启动这些镜像
+
+
+
+
+
+
+DockerMachine
+
+$ curl -L https://github.com/docker/machine/releases/download/v0.12.1/docker-machine-`uname -s`-`uname -m` >/tmp/docker-machine &&
+chmod +x /tmp/docker-machine &&
+sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
+
+docker-machine version
+
+How to uninstall 
+	rm $(which docker-machine)
+	docker-machine rm <machine-name>
+	docker-machine rm -f $(docker-machine ls -q)
+
+
+Microsoft Hyper-V
+
+docker-machine create --driver hyperv vm 
+
+docker-machine create -d hyperv --hyperv-virtual-switch "<NameOfVirtualSwitch>" <nameOfNode>
+
+docker-machine create -d hyperv --hyperv-virtual-switch "Primary Virtual Switch" manager1
+
+ @FOR /f "tokens=*" %i IN ('docker-machine env node1') DO @%i 					# Windows 环境设置！
+
+docker-machine start|stop default 
+
+    - `docker-machine config`
+    - `docker-machine env`
+    - `docker-machine inspect`
+    - `docker-machine ip`
+    - `docker-machine kill`
+    - `docker-machine provision`
+    - `docker-machine regenerate-certs`
+    - `docker-machine restart`
+    - `docker-machine ssh`
+    - `docker-machine start`
+    - `docker-machine status`
+    - `docker-machine stop`
+    - `docker-machine upgrade`
+    - `docker-machine url`
+
+
+docker-machine create --driver virtualbox default 
+
+docker-machine env default 
+
+eval "$(docker-machine env default)"
+
+docker run busybox echo hello world
+
+docker-machine ip default 
+
+docker run -d -p 8000:80 nginx
+
+
+
+
+
+docker run -d -p 80:80 --name wordpess -e WORDPRESS_DB_HOST=10.33.203.165 -e WORDPRESS_DB_USER=admin -e WORDPRESS_DB_PASSWORD=csphere2015
+
+docker tag csphere/csphere:0.11.2 10.255.43.181:5000/csphere/csphere:0.11.2 
+docker images 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+supervisord
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+查看iptables信息
+	iptables -vnL -t filter 
+
+
+如何将Linux时间转换成标准时间
+	date -d "@1498178729"
+	echo "1498178729" | awk '{print strftime ("%F %T",$0)}'
+
+
+
+
+
+python web server
+
+#!/usr/bin/python2.7
+
+import socket
+
+HOST = '0.0.0.0'
+PORT = 22222
+
+text_content = '''HTTP/1.x 200 OK
+Content-Type: text/html
+
+Hello world'''
+
+s  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((HOST, PORT))
+
+while True:
+	s.listen(3)
+	conn, addr = s.accept()
+	request 	= conn.recv(1024)
+	method		= request.split(' ')[0]
+	src		= request.split(' ')[1]
+	
+	if method == 'GET':
+		content = text_content
+
+		print 'Connected by', addr
+		print 'equest is:', request
+		conn.sendall(content)
+		
+		conn.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

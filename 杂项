@@ -1,0 +1,164 @@
+杂项
+
+
+
+hadoop离开安全模式
+
+hadoop dfsadmin -safemode leave 
+
+hadoop查看安全模式状态
+
+hadoop dfsadmin -safemode get
+
+
+
+
+arpd 命令 
+
+arpd 
+-l 将arp数据库输出到标准输出设备显示并退出
+-b 制定arpd数据库文件,默认的位置为 /var/lib/arpd.db 
+-a 制定目标被认为死掉前查询的次数
+
+arpd -b /var/tmp/arpd.db
+arpd -l -b /var/tmp/arpd.db 
+
+
+
+
+
+如何将Linux时间转换成标准时间
+	date -d "@1498178729"
+	echo "1498178729" | awk '{print strftime ("%F %T",$0)}'
+
+
+ip route add default via 192.168.1.1
+
+
+
+linux 会使用硬盘的一部分做为SWAP分区，用来进行进程调度--进程是正在运行的程序--把当前不用的进程调成‘等待（standby）‘，甚至‘睡眠（sleep）’，一旦要用，再调成‘活动（active）’，睡眠的进程就躺到SWAP分区睡大觉，把内存空出来让给‘活动’的进程。
+　　如果内存够大，应当告诉 linux 不必太多的使用 SWAP 分区， 可以通过修改 swappiness 的数值。swappiness=0的时候表示最大限度使用物理内存，然后才是 swap空间，swappiness＝100的时候表示积极的使用swap分区，并且把内存上的数据及时的搬运到swap空间里面。
+　　在ubuntu 里面，默认设置swappiness这个值等于60。
+　　
+　　!!!! 如果内存较小，而进程调度频繁，硬盘的响动就会大了 !!!!
+　　
+　　现在一般1个G的内存可修改为10， 2个G的可改为5， 甚至是0。具体这样做：
+　　1.查看你的系统里面的swappiness
+　　$ cat /proc/sys/vm/swappiness
+　　不出意外的话，你应该看到是 60
+　　2.修改swappiness值为10
+　　$ sudo sysctl vm.swappiness=10
+　　但是这只是临时性的修改，在你重启系统后会恢复默认的60，为长治久安，还要更进一步：
+　　$ sudo gedit /etc/sysctl.conf
+　　在这个文档的最后加上这样一行:
+　　vm.swappiness=10
+　　然后保存，重启。ok，你的设置就生效了。
+
+
+
+wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+
+
+
+yum install lrzsz 
+
+从远端接受文件
+sz filename
+上传文件
+rz 
+
+
+
+	项目：openca
+
+
+		/dev/random, /dev/urandom
+
+	一、建立私有CA
+		openssl的主配置文件：/etc/pki/tls/openssl.cnf
+			[CA_default]
+				dir: CA的主目录
+				certs: 已颁发证书的存储位置
+				crl_dir：已吊销证书的存储位置
+				database：证书索引文件
+				new_certs_dir：新颁发证书的存储位置
+				certificate：CA证书文件
+				serial：证书颁发时的当前序列号
+				crlnumber：吊销证书的当前序列号
+				crl：当前使用的CRL
+				private_key: CA私钥
+				RANDFILE：私有随机数生成器文件
+
+			1、生成私钥文件
+				# cd /etc/pki/CA
+				# (umask 077; openssl genrsa -out private/cakey.pem 2048)
+
+			2、生成自签署证书
+				req子命令：生成PKCS#10格式的证书签署请求
+
+					-new: 生成新的证书签署请求；
+					-key /path/to/private_key_file：私钥文件路径；
+					-days n：证书有效时长；
+					-out /path/to/request_file: 生成的证书请求文件路径；
+					-x509: 专用于CA生成自签署证书时；
+
+					-newkey rsa:NUM  无需事先专门生成私钥文件，而是生成请求时直接生成私成私钥，并提取公钥用于证书；
+
+				# openssl req -new -x509 -key private/cakey.pem -days 3655 -out cacert.pem
+				# touch ./{index.txt,serial}
+				# echo 01 > serial
+
+	二、给节点发放证书：
+
+		1、节点申请证书：在申请证书的主机上进行
+			假设：用httpd服务，因此其位置为/etc/httpd/conf/certs/
+
+			生成私钥
+				# (umask 077; openssl genrsa -out httpd.key 1024)
+			生成证书签署请求
+				# openssl req -new -key httpd.key -out httpd.csr -days NUM
+				注意：其subject信息中位置与公司要与CA的保持一致；
+			把请求文件发送给CA
+				# scp httpd.csr CA_IP:/tmp/
+
+		2、CA签署证书：在CA主机上执行如下命令
+			验正请求者的信息；
+			签署证书
+				# openssl ca -in /path/from/REQ.csr -out /path/to/somefile.crt -days NUM
+			把签署好的证书发还给请求者:
+				# scp /path/to/somefile.crt REQ_HOST:/path/to/somewhere/
+
+			注意：每一个需要接收服务器发来的证书，并验正证书合法性的客户端主机，都必须拥有CA的证书才能进行；
+
+		3、查看证书中的相关信息
+			# openssl x509 -in /path/to/somefile.crt -noout -text|-subject|-serial
+
+	三、吊销证书
+
+		(一) 获取证书的serial (在证书持有端进行)
+			# openssl x509 -in /path/to/somefile.crt -noout -serial -subject
+
+		(二) CA
+			1、根据证书持有者提交的serial和subject信息来与index.txt数据库文件中的信息是否一致；
+
+			2、吊销证书
+				# openssl ca -revoke /etc/pki/CA/newcerts/SERIAL.pem
+
+			3、生成吊销证书的编号（如果是第一次吊销）
+				# echo 01 > /etc/pki/CA/crlnumber
+
+			4、更新证书吊销列表
+				# cd /etc/pki/CA/crl/
+				# openssl ca -gencrl -out thisca.crl
+
+				注意：查看crl文件的方法
+					# openssl crl -in /path/from/somefile.crl -noout -text
+
+
+
+					secpol.msc 
+					ncpa.cpl 
+					dcpromo
+					gpedit.msc
+					

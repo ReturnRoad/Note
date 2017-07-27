@@ -1,0 +1,541 @@
+zabbix架构中的组件 
+	zabbix-server		C语言
+	OS : zabbix-agent 	C语言 
+	zabbix-database		MySQL,PGSQL(PostgreSQL),Oracle,DB2,SQLite
+	zabbix-web	GUI 	用于实现zabbix设定和展示	PHP
+	zabbix-proxy		分布式监控环境中的专用组件
+	
+
+	zabbix产生的数据主要由四部分组成
+		配置数据
+		历史数据	50Bytes
+		历史趋势数据 	128Bytes 
+		事件数据 	130Bytes
+
+编译安装zabbix :
+	同时安装server和agent
+	./configure --enable-server --enable-agent --with-mysql --enable-ipv6 --with-net-snmp --with-libcurl --with-ssh2
+
+	仅安装server，并支持将数据放入mysql中
+	./configure --enable-server --with-mysql --with-net-snmp --with-libcurl
+
+	仅安装proxy,并支持将数据放入mysql中
+	./configure --prefix=/usr --enable-proxy --with-net-snmp --with-mysql --with--ssh2
+
+	仅安装agent
+
+	./configure --enable-agent 
+而后编译安装zabbix即可
+# make 
+# make install 
+
+
+	yum install zabbix-server zabbix-server-mysql zabbix-get zabbix-2.4 zabbix-web zabbix-web-mysql 
+zabbix-agent zabbix-sender 
+	cd /usr/share/doc/zabbix-server-mysql 
+	mysql zabbix < schema.sql 
+	mysql zabbix < images.sql 
+	mysql zabbix < data.sql 
+	
+vim /etc/zabbix/zabbix_server.conf
+ListenPort=10051
+
+DBHost=localhost
+DBName=zabbix
+DBUser=zbxuser
+DBPassword=zbxpass
+
+vim /etc/php.ini
+	date.timezone = Asia/Chongqing
+	
+
+
+
+zabbix逻辑组件
+	主机组,主机 
+	item(监控项),application(应用)
+	graph(图像)
+	trigger(触发器)
+		event(事件)
+	action 
+		notice
+		command
+	media
+	users(media)
+		
+	监控系统
+		数据采集，数据存储，报警，数据可视化
+		
+	zabbix:
+		database --> zabbix-server(zabbix_server.conf) --> zabbix-web(LAMP) --> http://zabbix-web-server/zabbix 
+	#php版本需要,php.ini文件中时区配置正确 
+		zabbix-agent(zabbix-agent)
+
+	添加主机的方式
+	
+	SNMP 
+		agent 161 
+		nms   162 (trap)
+
+		yum install -y net-snmp 
+		vim /etc/snmpd.conf 
+			v2c
+		service snmpd start 	
+
+	历史数据：采样生成的数据 
+	历史趋势数据：每小时的最大值,最小值,平均值,统计
+	
+	As is 	不做任何处理 
+	Delta(speed per second平局速率) : (value -prev_value)/(time -prev_time)
+		10:12000,20:13000
+	Delta(simple change):(value -prev_value)
+		
+
+	zabbix_get -s 172.16.100.8 -k "system.uname"
+	zabbix_get -s 172.16.100.8 -k "net.if.out[eth0]"
+	
+触发器表达式的例子
+ {www.magedu.com:system.cpu.load[all,avg1].last(0)}>3
+ 主机www.magedu.com上所有CPU的过去1分钟内的平均负载的最后一次取值大于3时将触发状态变换
+
+Trigger:
+	名称中可以使用宏
+		{HOST.HOST},{HOST.NAME},{HOST.IP},{HOST.CONN},{HOST.DNS}
+Action有两类
+	send message
+	command
+
+由zabbix监控某关注的指明
+	host group --> host --> item(存储于MySQL) --> graph (zabbix-web) --> trigger (触发器) --> action(condition+operation)
+	application:把功能相近的一组item归类在一起统一进行管理组件
+
+Zabbix完整的监控配置流程大体上由如下步骤组成
+	Host group --> Hosts --> Applications --> Items --> Triggers --> Events --> Actions --> User groups --> Users --> Medias 
+
+	graph,screen
+
+	依赖关系：
+		Host --> Item --> Trigger --> Action --> Notice,RemoteCommand
+
+	添加主机到zabbix server
+		discovery,auto_registrion
+		low level discovery #区别不同系统的主机
+
+
+Zabbix的基本应用
+	Host group --> Host --> Application --> Item --> Trigger(OK-->PROBLEM,trigger event) --> Action(Conditon+Operation(Send Message,Remote Command))
+
+	Send Message:
+		Media 
+			Email,SMS,Jabber,Scritps,EZ Texting
+		User groups --> User (Media) 
+
+		实例：	node2.magedu.com --> Traffic --> Inbound traffic,Outbound traffic --> trigger (inboud)
+
+		Zabbix常用术语
+			Item Key 
+			Escalation
+			Template
+			Web Scennario
+
+		Zabbix服务器进程
+			housekeeper,alter,discover,httppoller,Poller,pinger,db_config_syncer,timer,escaltor
+
+		Item key
+			命名要求：只能使用字母，数字，下划线，点号，连接符
+			接受参数：system.cpu.local[<cpu>,<mode>]
+					 net.if.inbound[if,<mode>]
+
+				注意：每一个Key背后都应该有一个命令或脚本来负责实现数据收集，此命令或脚本可调用传递给Key的参数，调用方式为$1,$2...
+
+			在Zabbix中定义item时调用某Key，还需要额外定义数据采集频率，历史数据的保存时长
+
+		Trigger:
+			触发器表达式：
+				{<Server>:<key>.<function>(<parameter>)}<operator><constant>
+
+				{node2.magedu.com:net.if.in[eth0,bytes].last(#1)}>1200
+
+				<function>	评估采集到的数据是否在合理范围内使用的函数，其评估过程可以根据采集到的数据，当前时间或其他因素
+					avg , count , change , date , dayofweek , delta , diff , iregexp ,
+				max , min , nodata ,now , sum , prev
+
+					regexp : 检查最后一次采样的数据是否能被指定的模式所匹配
+						1 表示匹配 ，0表示不匹配
+					now : 返回从元年到现在经历的秒数
+					prev : 相当于last(#2),返回倒数第二个采样值
+					str : 从最后一次的采样中查找此处指定的子串
+					strlen : 指定字符串返回的长度是否为指定的长度
+
+				<operator>
+					> < = #(不等于)
+					/ * - + 
+					& |
+
+					触发器间有依赖关系
+
+	Action
+		message
+		condition 
+			event:
+				trigger 
+				discovery 
+					Service Up,Service Down,Host up,Host Down,Service Discovery,ServiceLost,Host Discovered,Host Lost 
+				auto_registration
+				lld 
+		operation
+			send message 
+				Media Type 
+					Email,SMS,Jabber,Script,EZ Texting
+				User
+			remote command
+				1.给zabbix定义sudo规则
+					zabbix ALL=(ALL) ALL
+				2.不支持active模式的agent
+				3.不支持代理模式
+				4.命令长度不得超过255个字符
+				5.远程命令可以使用宏
+				6.zabbix-server仅执行命令，而不关心命令是否成功
+
+				grep "Enable" 
+				前提：zabbix-agent要配置为支持执行远程命令
+					EnableRemoteCommands=1
+					LogRemoteCommand=1 		#记录远程执行命令
+				注意：
+					1.如果用到以其他用户身份运行话要写成sudo的格式
+						sudo /etc/rc.d/init.d/httpd restart
+					2.在各agent上的sudoers文件要注释下行
+						#Defaults requiretty
+
+			Script:Alert Script
+				放置于特定目录中 zabbix_server.conf 配置文件中的参数
+				AlertScriptsPath=/usr/lib/zabbix/alertscripts
+
+				脚本中可使用$1,$2,$3 来调用action中的邮件的收件人,Default Subject,Default Messages
+
+				注意：新放入此目录中的脚本，需要重启zabbix_server服务
+
+				#!/bin/bash
+				to = "$1"
+				subject = "$2"
+				body = "$3"
+
+				echo "$body" | mail -s "$subject" "$to" < "$body"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+create database zabbix character set utf8;
+grant all on zabbix.* to 'zbxuser'@'172.16.%.%' identified by 'zbxxpass';
+grant all on zabbix.* to 'zbxuser'@'node1.magedu.com' identifiedy by 'zbxpass';
+flush privileges;
+
+
+use zabbix;
+select * from items;
+select key_,type from items;
+
+
+
+
+
+
+zabbix组件
+	zabbix-server
+	zabbix-database
+	zabbix-web
+	zabbix-agent
+	zabbix-proxy
+zabbix逻辑组件
+	主机组，主机
+	item(监控条目) application(应用)
+	trigger(触发器)
+		event(事件)
+	action 
+		notice
+		command
+
+	media
+	users(media)
+监控系统：
+	数据采集，数据存储，报警，数据可视化
+
+
+
+
+yum install hping3 
+#模拟DDOS攻击
+
+hping3 192.168.1.1 --faster
+
+vmstat
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
