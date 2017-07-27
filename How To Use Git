@@ -38,15 +38,21 @@ How To Use Git
 推送改动
 	git commit -m "代码提交信息" 		#改动提交到HEAD
 
-	git push origin master			#将改动提交到远端仓库
+	git push origin master			# 将改动提交到远端仓库
 
 	git remote add origin <server> 		# 将你的仓库链接到某个远程服务器
 
+	git remote -v 					# 查看远程仓库地址
+
 分支
 	git checkout -b new_feature 		
+			相当于		git branch dev 
+						git checkout dev
 							创建新分支
 	git checkout master	
 							切换到主分支
+	git branch 
+							查看当前分支
 	git branch -d new_feature
 							删除新分支
 	git push origin <branch>
@@ -83,11 +89,15 @@ How To Use Git
 
 
 
+git status 		# 查看仓库工作区的状态
 
+git diff redme.txt 		 
 
+git log --pretty=online 	
+		显示从最近到最远的提交日志,
 
-
-
+git reset --hard HEAD_ID
+		回退到上一个HEAD版本
 
 
 

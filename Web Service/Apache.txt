@@ -1,0 +1,680 @@
+HTTP协议 
+	http 	Hyper Text Transfer Protocol 
+		传输文本 HTML 
+		
+		html 	Hyper Text Mark Language 
+		
+	html文本框架 
+		<html>	
+			<head>
+				<title>TITLE</title>
+			</head>
+			<body>	
+				<h1>H1</h1>
+					<p></p>
+				<h2>H1</h2>
+					<p><a href="admin.html">ToGoogle</a>
+			</body>
+		</html>
+				
+		html文档的生产方式 
+			静态 
+			动态 ： 编程语言编写的程序可输出html格式的结果
+				依赖脚本解释器 
+					Php		php解释器 
+					jsp		jvm		
+			
+		http协议报文 
+			request 
+				请求不同html文档 
+			response 
+			
+			C/S 
+				C  UserAgent,Brower
+				S  Server
+				
+		http协议 
+			http 0.9 
+			http 1.0 	引入keep-alive  持久连接 缓存
+				MIME 	Multipurpose Internet Mail Extesions 
+			http 1.1 			
+			http 2.0 
+			spdy 
+		
+		web服务器
+			理解用户请求的资源格式不仅仅是纯html格式的文档 
+				静态资源 
+				动态资源 
+					application/php 
+					
+		web资源 
+			URI
+			URL 描述一个特定服务器上某资源的特定位置 
+				http://www.magedu.com:80/download/bash-4.3.1-1.rpm 
+				scheme	http://
+				服务器 www.magedu.com:80 
+				特定服务器上的资源 /download/bash-4.3.1-1.rpm 
+				
+			CGI Common Gateway Interface 
+				简化版的http 
+				
+		http事务 	一次请求及对应的响应 
+		
+		http方法 
+			GET 	请求获取一个资源，需要服务器发送
+			HEAD 	和GET近似，但其不需要服务器响应资源，而返回相应首部
+			POST 	基于HTML表单向服务器发送资源，服务器通常需要存储此数据（关系型数据库）
+			PUT 	向服务器发送此资源，服务器通常需要存储此数据 （文件系统）
+			DELETE 	删除URL指向的资源 
+			OPTIONS 探测服务器端对请求的URL所支持使用的请求方法
+			TRACE 	跟一次请求中间所经过的代理服务器，防火墙或网关 
+		
+		http状态码 
+			1XX 		信息性状态码  
+			2XX 		成功状态码 
+				200		OK 				
+				201		CREATED 		请求已经被实现，并且有响应报文被创建
+			3XX 		重定向类的状态码 
+				301 	Moved Permanently 	永久重定向 
+				302 	Found  临时重定向,会在响应报文中使用Location：新位置 
+				304 	Not Modified 
+			4XX 		客户端类错误
+				403 	Forbidden 	
+				404 	Not Found
+				405 	Method Not Allowed 
+			5XX 		服务器类的错误
+				500		Internal Server Error	服务器内部错误
+				502		Bad Gateway				代理服务器从上游服务器收到一条伪相应
+				503		Service Unavailable		服务暂时不可用
+			
+	http协议,协议首部 
+		Name Value 
+			
+		通用首部 
+		请求首部 
+		相应首部 
+		
+	http请求报文 
+		<method> <request-URL> <version>
+		<HEADERS>
+			
+		<entity-body>
+			
+	http响应报文 
+		<version> <status> <reason-phrase>
+		<HEADERS>
+			
+		<entity-body>	
+			
+	<method>		请求方法 
+	<request-URL> 	请求的资源
+	<version>		http协议版本 HTTP/<major>.<minor> HTTP/1.0 HTTP/1.1 
+	<headers>		各种可以使用的首部 
+	<status> 		状态码 
+	<reasion-phrase>	原因短语,指状态码的易读信息
+			
+	http协议是无状态的	stateless 
+		cookie 
+			set-cookie 
+			set-cookie2 
+			Cookie 
+			
+			
+	一次web资源请求的具体过程 
+		建立连接
+		接受请求
+		处理访问 
+		访问资源
+		构建响应 
+		发送响应 
+		记录日志 
+		
+	连接 
+		(client,cport <---> server,sport)
+		监听套接字 ： 80端口 
+		
+	web服务器的I/O结构 
+		单进程模型 ： 串行 
+		多进程模型 ： 每个进程响应一个用户请求实现并发的效果
+		复用I/O机制 ： 一个进程生成多个线程，每个线程响应一个用户请求 
+		复用I/O机制 ： 多个线程，每个线程响应多个用户请求 
+		
+		httpd 
+		nginx 
+		lighttpd 
+		
+		IIS 		Web容器 
+		tomcat,jetty,resin
+		weblogic 
+		websphere 
+		
+		
+	httpd的特性 
+		高度模块化 		core + modules 
+		DSO 			Dynamic Shared Object 			动态装卸载模块 
+		MPM 			Multipath Processing Module 	多道处理模块
+			prefork 	每个进程响应一个用户请求，预先生成多个空闲进程
+				select();   1024 
+			worker 		启动多个进程，每个进程生成多个线程，每个线程相应一个用户请求
+			event		启动多个线程，每个线程响应N个请求
+				event-driven 	事件驱动
+			
+			
+	httpd的功能特性 
+		丰富用户认证：基本认证和摘要认证 
+			CGI 原生支持perl CGI 
+			虚拟主机 
+				基于端口 IP 主机名 
+			反向代理
+				负载均衡 
+			用户站点
+			路径别名
+			支持第三方模块 
+			
+			
+CentOS 6 
+	配置文件 
+		/etc/httpd/conf/httpd.conf 
+		/etc/httpd/conf.d/*.conf 
+	服务脚本 
+		/etc/rc.d/init.d/httpd 
+		脚本配置文件 /etc/sysconfig/httpd 
+	模块目录 
+		/etc/httpd/modules 	链接文件  
+		/usr/lib64/httpd/modules 	
+	主程序 
+		/usr/sbin/httpd： prefork 
+		/usr/sbin/httpd.event  event 
+		/usr/sbin/httpd.worker worker 
+	日志文件目录 
+		/var/log/httpd 
+			access_log 	访问日志 
+			error_log	错误日志 
+	站点文档根目录 
+		/var/www/html/images/a.jpg 
+			http://www.magedu.com/images/a.jpg 
+			
+		httpd的配置文件说明 
+			grep "Section" httpd.conf 
+			
+		### Section 1:Globel Environment 
+		### Section 2:'Main' Server Configuration 
+		### Section 3:Virtual Hosts 
+		
+		主服务器和虚拟主机一般不同时使用：默认使用主服务器
+		
+		指令参数：不区分字符大小写，但其值有可能会区分大小写 
+		
+	1.持久连接 
+		KeepAlive {On|Off}
+		MaxKeepAliveRequests 100 
+		KeepAliveTimeout 15 
+		
+	2.MPM参数 
+		<IfModule prefork.c>
+			StartServers 		8				服务预期动的空闲进程
+			MinSpareServers		5				最小空闲进程
+			MaxSpareServers		20				最大空闲进程
+			ServerLimit 		256				最多创建多少个服务进程
+			MaxClients			256				最大客户端请求进程
+			MaxRequestsPerChild	4000			每个子进程最多处理多少次请求
+		</IfModule>
+		
+		
+		<IfModule worker.c>
+			StartServers         4				服务器启动启动时启动的进程数
+			MaxClients         300				最大用户请求并发数
+			MinSpareThreads     25				最小空闲线程
+			MaxSpareThreads     75				最大空闲线程
+			ThreadsPerChild     25				每个线程可以处理的请求数
+			MaxRequestsPerChild  0				每个子进程最多处理多少次请求 
+		</IfModule>
+
+		指定监听的地址和端口 
+		Listen [IP:]PORT 
+		此指令可以重复多次
+		
+		DSO机制装载的模块 
+			httpd -D DUMP_MODULES
+			
+		LoadModule_Name  Module_name	/path/to/Module_File 
+		
+		指定站点根目录
+		DocumentRoot "/var/www/html"
+		
+		站点路径访问控制 
+		 基于本地文件访问控制 
+			<Directory ~ "/path/to/somewhere">   ~模式匹配
+			
+			</Directory>
+		
+		 基于URL访问路径做访问控制 
+			<Location "path/to/URL">
+			
+			</Location>
+		
+		于Directory中可用的访问控制 
+		Options 
+			-Indexes 	当访问的路径下无默认的主页面，将所有资源以列表的形式呈现给用户
+			-FollowSymlinks		跟踪符号链接
+			SymLinksiOwnerMatch 
+			
+			AllowOverride 
+				支持在每个页面目录下创建.htaccess用于实现对此目录中资源访问时的访问控制
+			
+		基于IP做访问控制 
+			Order allow,deny 		写在后方的为默认
+			Deny from 172.16.100.17
+			Allow from 172.16.
+			
+		DirectoryIndex 	index.html index.html.var 		指定默认主页面 	
+			
+		ErrorLog 	"/path/to/error_log"
+		LogLevel {debug|info|noctice|warn|error|crit|alert|emerg}
+		
+		LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+		CustomLog "/path/to/access_log" LogFormat_Name
+		
+			%h 		客户端地址 
+			%l		远程登陆名：通常为-
+			%u		认证时输入用户名，没有认证时为-
+			%t 		服务器收到用户请求的时间 
+			%r 		请求报文的起始行 
+			%>s  	响应状态码 
+			%b 		响应报文的长度 单位字节 
+			%{HEADER_NAME}i 	记录制定首部对应的值 
+			
+		路径别名 
+		站点根目录 /www/html 
+		http://www.magedu.com/images/log/new.gif 
+			  /www/html/images/logo/new.gif 
+			  
+		实现URL路径的映射，从而所访问的资源不再依赖于站点根目录 
+		
+			Alias /URL/ "/path/to/somewhere/"
+			
+			
+	设定默认字符集
+		ASCII 
+		字符集 	GB2312  GBK 
+			UTF 
+		
+		AddDefaultCharset 
+		
+	CGI脚本  CGI:通用网关接口 
+		CGI脚本路径别名
+		/var/www/cgi-bin/
+			http://server/cgi-bin/ 
+			<pre>
+			</pre>
+			FastCGI  协议 
+			
+	基于用户访问控制 
+		用户认证：
+			基本认证 ： Basic
+			摘要认证 ： digest 
+			
+		虚拟用户：仅用于访问某服务或获取某资源的凭证 
+			文本文件 .htpasswd 
+			SQL数据库
+			dbm 数据库引擎,提供API  以文本文件存储数据库信息 
+			ldap 	轻量级目录访问协议
+			
+			认证 授权
+		authentication provider		账号和密码的存储机制 
+			authn 
+		
+		authorizention provider 	授权
+			
+		基于文件做访问控制 
+		<Directory "/var/www/html/admi">
+			Options none 
+			AllowOverride AuthConfig 
+			AuthType Basic 
+			AuthName "Admin Area."
+			#AuthBasicProvider file 
+			AuthUserFile /etc/httpd/conf/.htpasswd 
+			AuthUserGroupFile /etc/httpd/conf/.htgroup
+			Require group GROUP_NAME 
+			#Require valid-user 				文件中所有用户均可访问 
+			#Require user USERNAME			单独用户访问控制
+		</Directory>
+			
+		提供认证文件 
+			htpasswd 
+				-c 	如果此文件事先不存在就创建,只能在创建第一个用户时使用
+				-m  以md5的格式编码存储用户的信息
+				-D 	删除一个用户 
+			
+		组文件 
+			
+			祖名 ： user1 user2 user3 
+			test:user1 user2 
+			
+			
+	虚拟主机 
+		使用不同访问路径 
+			基于端口 
+			基于IP
+			基于主机名 
+			
+		使用虚拟主机的前提：取消主服务器
+		# DocumentRoot "/path/to/somewhere"
+			
+		定义虚拟主机 
+		NameVirtualHost  IP:PORT 		#2.4没有？！
+		NameVirtualHost  *:PORT 
+		
+		<VirtualHost IP:PORT>
+			ServerName 
+			DocumentRoot   
+			ServerAlias 
+			ErrorLog
+			CustomLog 
+		</VirtualHost>
+			
+			0789
+		配置文件语法检查 
+			service httpd configtest 
+			httpd -t 
+			
+		<VirtualHost 172.16.100.7:80>	
+			ServerName www.magedu.com 
+			DocumentRoot "/web/hosta"
+		</VirtualHost>
+		
+		<VirtualHost 172.16.100.8:80>
+			ServerName www.magedu.com 
+			DocumentRoot "/web/hostb"
+		</VirtualHost>
+
+		<VirtualHost 172.15.100.8:8080>
+			ServerName www.magedu.com 
+			DocuemntRoot "/web/hostc"
+		</VirtualHost> 
+			
+		
+	elinks -dump http://URL 		#获取到页面数据后直接退出进程 
+
+
+
+https协议 
+		ssl() 		安全的套接字层 	v1,v2,v3 
+		tls() 		传输层安全 
+	
+	ssl会话基于IP地址创建,所以,每一个IP仅创建一个SSL会话 
+	ssl握手要完成的工作
+		交换协议版本号 
+		选择双方都支持的加密方式 
+		客户端对服务器端实现身份验证
+		密钥交换 
+	
+	https协议：基于SSl二进制编码 443/tcp 
+		openssl s_client 
+	
+	客户端验证服务器证书 ： 
+		有效性检测:证书是否仍然在有效期内
+		CA的可信度检测
+		证书的完整性检测
+		持有者的身份检测
+	
+	
+	httpd工作于https 
+	1.安装mod_ssl模块 
+	2.为服务端生成私钥,并为其提供证书
+	3.配置实用https的虚拟主机 
+	4.重新装载配置 
+	
+	
+	yum -y install mod_ssl 
+	
+	生成CA密钥文件 
+		cd /etc/pki/CA 
+		(umask 077; openssl genrsa -out private/cakey.pem 2048)
+		openssl req -new -x509 -key private/cakey.pem -out cacert.pem -days 1000
+		touch serial index.txt 
+		echo 01 > serial 
+		
+	生成Web服务器私钥和证书请求	
+	mkdir ssl 
+	cd ssl 
+	(umask 077; openssl genrsa -out httpd.key 1024)
+	openssl req -new -key httpd.key -out httpd.csr 
+	CA服务器签署httpd.csr请求 
+	openssl ca -in httpd.csr -out httpd.crt -days 1000
+	
+	vim /etc/httpd/conf.d/ssl.conf
+		DocumentRoot 	"/web/hosta"
+		ServerName 		www.magedu.com 
+		SSLCertificateFile /etc/pki/tls/certs/localhost.crt
+		SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
+	
+	
+	openssl s_client -connect 172.16.100.7:443 -CAfile /root/cacert.pem 
+	GET /index.html HTTP/1.0
+	#Connection:keep-alive 
+	Host www.magedu.com 
+	
+	
+	
+	status页面 
+	httpd内嵌有handler,其中有一个handler用于输出当前httpd服务相关状态信息
+		hanlder:server-status 
+		启用handler要使用SetHandler指令 
+		
+			handler	当文件被调用时,apache内部表示形式：一般每种文件类型都有其隐式处理器
+	
+	
+	访问属性配置总结
+		配置文件系统访问路径 
+			<Directory [~] "">
+			</Directory>
+	
+			<File [~] "">			#影响特定文件的访问路径
+			</File>
+	
+			配置URL访问路径 
+			<Location [~] "">
+			</Location>
+	
+			<LocationMatch "">
+			</LocationMatch>
+	
+			
+	curl 
+		-A/--user-agent <string> 		设置用户代理发送给服务器
+		-basic 		使用HTTP基本认证
+		--tcp-nodelay 		使用TCP_NODEALY选项 
+		-e/--referer <URL>	来源网址 
+		--cacert <file>     CA证书 SSL
+		--compressed 		要求以压缩的格式返回 
+		-H/--header <line> 	自定义头部信息传递给服务器
+		-I/--head 			只相应报文首部信息 
+		--limit-rate <rate> 设置传输速度 
+		-u/--user <user[:password]> 设置服务器的用户和密码
+		-0/--http1.0 		使用HTTP 1.0 
+		
+		
+	SetOutFilter DEFLATE 
+	
+	# mod_deflate configuration
+	# Restrict compression to these MIME types 
+	AddOutputFilterByType DEFLATE text/plain 
+	AddOutputFilterByType DEFLATE text/html 
+	AddOutputFilterByType DEFLATE application/xhtml+xml 
+	AddOutputFilterByType DEFLATE text/xml
+	AddOutputFilterByType DEFLATE application/xml
+	AddOutputFilterByType DEFLATE application/x-javascript 
+	AddOutputFilterByType DEFLATE text/javascript 
+	AddOutputFilterByType DEFLATE text/css 
+
+	DefalteCompressionLevel 9 
+	
+	BrowserMatch ^Mozilla/4 gzip-only-text/html
+	BrowserMatch ^Mozilla/4\.0[678] no-gzip
+	BrowserMatch \bMSIE !no-gzip !gzip-only-text/html 
+	
+	
+	
+
+httpd程序包自带的工具 
+
+	httpd 
+		-t 			测试配置文件是否正确
+		-l 			列出静态文件列表 
+		-D DUMP_MODULES / -M 	列出DSO模块  
+		-D DUMP_VHOSTS		列出所有虚拟主机 
+		
+	htpasswd -c -m -d 
+	
+	apachectl 		httpd服务控制脚本 
+		
+	ab		apache benchmark	apache的性能测试工具
+	
+	apxs 	httpd能够扩展使用第三方模块的工具
+	
+	htcacheclean 	磁盘缓存清理工具 
+	
+	htdigest 	为digest认证创建和更新用户认证文件 
+	
+	httxt2dbm 	为rewrite map创建dbm格式的文件 
+	
+	rotatelogs 	不关闭httpd而切换其使用日志文件的工具
+		access_log access_log.1 access_log.2 
+	
+	suexec 
+		User apache 
+		Group apache 		
+		当httpd进程需要以另外的用户的身份去访问某些资源时，可以以suexec作临时切换 
+		
+	ab 工具的使用
+		http_load webbench seige 
+
+	ab [options] [http[s]://]hostname[:port]/path
+		-c # 		模拟的并发数 
+		-n #		总的请求数
+			n的值一定要大于c的值
+	
+	资源限定
+	每个普通用户只能打开1024个文件
+		ulimit 
+			-n	the maximum number of open file descriptors
+			-u  the maximum number of user processes
+		
+		软限定：可临时超出一定时长的上限 
+		硬限制：绝对不可超出的上限 
+
+		配置文件 
+			/etc/security/limits.conf 
+			/etc/security/limts.d/*.conf  
+
+
+
+编译安装httpd-2.4 
+	httpd程序依赖于apr和apr-util
+		apr:apache portable runtime 
+		
+	1) 	MPM支持在运行时装载 
+		--enabled-mpms-shared=all --with-mpm={prefork|worker|event}
+	
+	2) 	支持event mpm 
+	3) 	异步读写
+	4)	在每模块及每个目录使用不同的日志级别
+	5) 	每请求的配置  <IF>,<Elseif>
+	6)	增强版的表达式分析器 
+	7)	毫秒级的keep alive的timeout 
+	8)  基于FQDN的虚拟主机,无需Name Virtual Host指令 
+	9) 	支持用户自定义变量 
+
+	zlib       pcre-devel 
+
+	--prefix=/usr/loca/apache24
+	--sysconfdir=/etc/httpd 
+	--enabled-so 
+	--enabled-cgi 
+	--enabled-rewrite 
+	--with-zlib 				#依赖于pcre-devel 
+	--with-pcre 
+	--with-apr=/usr/local/apr 
+	--with-apr-util=/usr/local/apr-util/ 
+	--enable-mpms-shared=all 
+	--with-mpm=event 
+	--enabled-modules={most|all}
+	
+	mod_proxy_fcgi  mode_ratelimit 	mod_request  mod_remoteip 
+	
+	修改了一些配置机制 
+		不在支持使用 order,allow,deny 定义基于ip的访问控制 ,改为require 
+
+		htdocs 			默认网页文件存放地
+		error 			错误信息网页存放地
+		include			头文件存放地 		lv -sv /usr/local/apache/include /usr/include/httpd24
+		logs 			日志文件存放地 
+
+	基于IP做访问控制 
+		允许所有主机访问 	Require all granted 
+		拒绝所有主机访问 	Require all deny  
+		
+	控制某特定主机的访问
+		Require ip IPADDR 
+		Require not ip IPADDR  
+			IPADDR  
+				单个ip 
+				Network/Netmask  
+				Network/Length 
+				
+		Require host HOSTNAME 
+		Require not host HOSTNAME 
+			HOSTNAME 
+				FQDN 	具体的主机 
+				DOMAIN 	域内的所有主机 
+	
+	<RequireAll>
+		Require all granted 
+		Require not ip 172.16.200.7 
+	</RequireAll>
+	
+	
+	Include /etc/httpd/extra/httpd-vhosts.conf 
+		<VirtualHost  *:80>
+			ServerName www.magedu.com 
+			DocumentRoot "/web/hosta"
+			<Directory "/web/hosta">
+				Require all granted 
+			</Directory>
+		</VirtualHOst>
+		
+		<VirtualHost  *:80>
+			ServerName www.magedu.com 
+			DocumentRoot "/web/hostb"
+			<Directory "/web/hostb">
+				Require all granted 
+			</Directory>
+		</VirtualHOst>
+			
+#!/bin/bash 
+#
+
+cat << EOF 
+Content-Type: text/html 
+<pre>
+<h1>The hostname is :$(hostname).</h1>			
+The datatime is : $(date)
+</pre>
+			
+EOF 	
+	
+			
+			
+			
+			
+		
+<html>		
+		<head>
+				<title>Test Page</title>
+		</head>
+		<body>
+				<h1>Test Page On Web Server<h1>
+				<p> Welcome Here. </p>
+		</body>
+</html>

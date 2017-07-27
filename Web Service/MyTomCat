@@ -1,0 +1,479 @@
+env x='() { :; }; echo vulnerable' bash -c "echo this is a test"
+
+yum update -y bash 
+
+
+
+Tomcat:
+	动态站点：开发webapp
+		app:	C/S 
+		webapp:	B/S 
+			html 
+			
+	开发语言：
+		C --> (ABI)
+			ANSI C:
+				glibc,ulibc 
+
+			一次编译，到处运行
+			
+	web开发语言
+		jsp (JAVA)
+		php
+		python (Django)
+		ruby 
+		.net 
+		
+	webapp server:
+		jsp --> tomcat
+		php --> php-fpm 
+		python --> Django 每一个项目都是独立的
+		ruby --> ror 
+		
+	JavaOne
+		java面向对象
+		
+	JDK 1.1 : JAR文件格式 	JDBC  JavaBeans 
+	JDK 1.2 
+		Java技术分为了三个方向
+			J2SE 	标准版
+			J2EE	企业版
+			J2ME 	移动版
+			
+			Classic VM,Host Spot VM,Exact VM 
+			
+			新技术：EJB,Java Plug-in,Swing,JIT
+			
+	JDK 1.3
+		JNDI
+	
+	JDK 1.4 
+
+		Java类库
+			类：属性,操作
+			对象:
+
+
+	OpenJDK
+	
+	Java技术的体系结构
+		Java 编程语言
+		Java API
+		Java Class 文件格式 	#保证兼容性 
+		Java VM 
+		
+		*.java --> *.class(bytes code)
+
+	Java可调用方法(理解为本地库或Java类库)
+
+	Java可调用方法有两类
+		OS提供库文件：本地方法
+		Java API:Java 方法
+		
+	Java语言的特点
+		面向对象
+		多线程
+		自动垃圾收集
+			GC: garbage collector 
+		动态连接
+		动态扩展
+	
+		JVM 	类加载器+执行引擎
+		
+	Java VM内部有两线程
+		守护线程:由VM自己使用,列如执行垃圾收集的线程
+		非守护线程:由运行的程序文件生成的线程
+		
+						class loader
+								|
+	方法区 	 堆   Java栈    PC寄存器     本地方法栈
+				(线程私有) (线程私有)
+		|						|
+	执行引擎 	--		本地方法调用接口
+	
+	JRE:Java Runtime Environment 
+
+	Serlet Container 	servlet 			jasper 
+	Web container jsp + servlet 
+
+		web container + JDK 		一个简化版的J2EE平台 Tomcat
+
+	JAVA EE Application Servers 
+		Websphere	ibm
+		Weblogic	oracle
+		oc4j		oracle 
+		JBoss		基于tomcat
+		
+		
+7.0		Tomcat	 
+7		Jetty	google app engine	比tomcat更轻量级 
+3.1		Resin
+
+
+
+ls /usr/java/jdk...
+
+vim /etc/profile.d/java.sh
+JAVA_HOME=/usr/java/latest
+PATH=$JAVA_HOME/bin:$PATH 
+export JAVA_HOME PATH
+
+
+vim /etc/profile.d/tomcat.sh 
+export CATALINA_HOME=/usr/local/tomcat 
+export PATH=$CATALINA_HOME/bin:$PATH 
+
+每个java项目运行起之后，都表现为一个JVM 进程
+
+tomcat的安装目录
+	bin 
+	conf 
+		server.xml 	tomcat-users.xml  web.xml(部署描述符)
+			部署 deployment 
+		
+	logs  日志 log4j
+	lib
+	temp 
+	webapps 	部署应用程序的根路径
+	work 		将webapps下的jsp文件编译后，让servlet能够识别
+	
+tomcat的配置文件 
+	server.xml 
+	context.xml 	
+		每个webapp都有其默认的配置文件(通常位于webapp目录下的META-INF目录中
+		通常用于定义会话管理器,Realm以及JDBC等),
+	此配置文件是用于为部署在当前tomcat实例上的所有webapp的默认配置文件 ,
+	web.xml 	为部署在当前tomcat实例上的所有的webapp提供默认部署描述符,通常用于为webapp
+	提供基本的servlet定义和MEM映射表 
+	tomcat-users.xml 
+	catalina.policy		当基于-security选项启动tomcat实例会读取此配置文件，用于定义JAVA的
+	安全策略,配置访问codebase或某些java类的权限
+	catalina.properties	 JAVA属性定义的文件,用于设定类加载器路径,安全包列表，以及一些调整Jvm性能的
+	相关参数信息,
+	logging.properties 	定义日志相关的配置信息,如日志级别,文件路径
+	
+	
+	tomcat的主配置文件 
+		组件：由java类实现：有些组件实现的方式不止一种.有些组件可以实现嵌套别的组件
+		
+		顶级类：Server（代表一个tomcat实例）
+		服务类组件	service 
+		容器类组件  engine(代表一个web container) host context 
+		连接器组件  connector 
+			http ssl ajp(apache jserv protocol)
+		被嵌套类组件	valve logger  realm 
+			
+		server.xml如何组织这些组件
+			<server>
+				<service>
+					<connector>
+					</connector>
+					... ... 
+					<engine>
+						<host>
+							<context>
+							</context>
+							... ...
+						</host>
+						... ... 
+					</engine>
+				</service>
+				
+				<service>
+				</service>
+				
+			</server>
+
+	tomcat自带的两个webapp
+	manager:管理器
+		输出状态server status
+		部署webapp
+	host-manager:主机管理器
+
+	tomcat的应用程序必须被"部署"才能够被访问
+		部署：是指将webapp及所依赖的类库等装载进tomcat实例,以便接受用户请求的操作
+		
+		部署方式：
+			静态方式(冷部署)：在tomcat启动之前进行的部署 
+			动态方式(热部署)：在不打断tomcat实例运行的前提下,通过tomcat manager或其他的部署工具进行的部署
+				TCD：tomcat client deployer
+				Tomcat Manager 
+				ANT 脚本
+				
+		部署相关的操作
+			Deploy:将webapp的源文件放置于目标目录.配置tomcat服务器能够基于context中定义的路径来访问此webapp
+		，并将其特有的类通过class loader装载到tomcat实例上
+			Loader：装载到tomcat实例上
+			Redeploy 重新部署，常用于升级时
+			Undeploy 反部署,停止webapp,并从tomcat实例移除其部分文件和部署名
+			Stop	停止
+			Start 	启动 
+			
+		
+		webapp应用程序：可以以打包格式进行部署
+			.war	webapp
+			.jar	EJB类
+			.rar	资源适配器
+			.ear	企业级应用程序
+			
+		webapp体系结构
+			webapp的特定组织格式,是一种层次型目标结构,通常包含了servlet代码文件,jsp页面文件,类文件
+		,部署描述文件
+		
+		/		webapp的根目录
+			/WEB-INF 		当前webapp的私有资源目录,通常web.xml和context.xm都放置于此
+				/classes	此webapp私有的类
+				/lib 		此webapp私有的,被打包为jar格式的类
+			/META-INF 		
+
+
+案例：	
+	http://www.server.com
+		path="/sns" docBase="sns"
+
+
+Tomcat的工作模型
+	standalone
+	in-process 
+	独立/网络 
+
+
+In-Process
+	server {
+		listen 		80 default_server;
+		server_name			www.server.com
+		location ~ \.(jsp|do)$ {
+			proxy_pass http://www.server.com:8080;
+			index index.jsp index.html index.htm;
+		}
+		location / {
+			root /tomcat/webapps/jcenter;
+			index index.jsp index.html;
+
+		}
+
+	}
+
+
+
+
+
+
+
+
+1.nginx反代动态至后端独立的tomcat主机,验证上传的静态资源保存的位置？如果传到后端主机，如何保证上传后的文件能够被访问？
+2.如果通过/jcenter来做映射，如何让nginx主机于本地处理静态内容路径能正常映射
+
+
+
+
+
+
+
+
+
+
+
+vim /tomcat/webapp/test/index.jsp 
+<%@ page language="java" %>
+<%@ page import="jvaa.util.*" %>
+<html>
+	<head>
+		<titile>JSP Test Page</title>
+	</head>
+	<body>
+		<%
+			out.println("Hello World!");
+			out.println("This is good Day");
+		%>
+	</body>
+</html>
+
+
+vim conf/server.xml 
+	<Engine name="Catalina" defaultHost="www.server.com">
+
+	<Host name="www.server.com" appBase="/tomcat/webapps"
+		unpackWARs="true" autoDeploy="true">
+	</Host>
+	</Engine>
+
+
+startup脚本
+
+#!/bin/sh 
+# Tomcat init script for linux 
+#
+# chkconfig: 2345 96 14 
+# description: The Apache Tomcat servlet/JSP contaniner
+# JAVA_OPTS='-Xms64m -Xmx128m'
+JAVA_HOME=/usr/java/lastest
+CATALINA_HOME=/usr/local/tomcat
+export JAVA_HOME CATALINA_HOME
+
+case $1 in
+start )
+	exec $CATALINA_HOME/bin/catalina.sh start ;;
+stop )
+	exec $CATALINA_HOME/bin/catalina.sh stop;;
+restart )
+	$CATALINA_HOME/bin/catalina.sh stop
+	sleep 2
+	exec $CATALINA_HOME/bin/catalina.sh start ;;
+* )
+	echo "Usage: `basename $0` {start|stop|restart}"
+	exit 1
+	;;
+esac
+
+
+
+
+LAMT 
+	mod_proxy
+	mod_proxy_http
+	mod_proxy_ajp
+
+	mod_proxy_balancer
+
+在http.conf的全局配置段或虚拟主机中添加如下内容
+
+ProxyVia-Off		用户请求经过Apache代理后是否显示Apache代理信息	
+ProxyRequest Off 	关闭正向代理(正反向代理不能同时存在)
+ProxyPreserverHost Off 		
+	如果启用此项，代理会将用户请求报文中的Host原封不动的发往后端服务器,而不再使用ProxyPass指定的服务器地址。TOMCAT定义了
+虚拟主机，否则就不支持此项
+
+ProxyPass /jcenter ajp://www.server.com:8009/jcenter/
+ProxyPassReverse / ajp://www.server.com:8009/
+
+
+apache --> 
+	mod_proxy
+		mod_proxy_http:http
+		mod_proxy_ajp:ajp
+	mod_jk
+		ajp
+
+
+代理配置实例
+<VirtualHost *:80>
+	ServerName www.server.com 
+	DocumentRoot /var/www/html
+	ProxyVia Off
+	ProxyRequests Off
+	ProxyPreserveHost On
+	ProxyPass /jcenter ajp://www.server.com:8009/jcenter
+	ProxyPassReverse /jcenter ajp://www.server.com:8009/jcenter
+</VirtualHost>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
