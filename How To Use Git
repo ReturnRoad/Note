@@ -1,0 +1,98 @@
+How To Use Git 
+
+配置Git
+
+	在本地建立ssh key 
+	ssh-keygen -t rsa -C "youremail.com"
+	默认在.ssh文件夹下   id_rsa.pub 	复制公钥
+
+	在Github上进入Account Settings 添加Depoly keys
+
+	ssh -T git@github.com
+
+设置用户名和邮箱
+	git config --global user.name "your_name"
+	git config --global user.email "your_email"
+
+在新建文件夹中创建仓库	
+	echo "# Note" >> README.md
+	git init
+	git add README.md
+	git commit -m "first commit"
+	git remote add origin https://github.com/ReturnRoad/Note.git
+	git push -u origin master
+
+克隆仓库
+	git clone /path/to/repository
+	git clone username@host:/path/to/repository
+
+
+工作流
+	Git 维护的三个区域
+		工作目录 	暂存区 	 HEAD
+
+		git add <filename>		# HEAD0
+		git add *.* 		
+		git add -i 			# 交互式添加文件
+
+推送改动
+	git commit -m "代码提交信息" 		#改动提交到HEAD
+
+	git push origin master			#将改动提交到远端仓库
+
+	git remote add origin <server> 		# 将你的仓库链接到某个远程服务器
+
+分支
+	git checkout -b new_feature 		
+							创建新分支
+	git checkout master	
+							切换到主分支
+	git branch -d new_feature
+							删除新分支
+	git push origin <branch>
+							将分支推送到远端仓库，不然该分支就是不为他人所知的
+
+更新与合并
+	
+	git pull 			# 更新本地仓库到最新改动
+
+	git merge <branch> 	# 以在你的工作目录中 获取（fetch） 并 合并（merge） 远端的改动。要合并其他分支到你的当前分支（例如 master）
+
+	git 都会尝试去自动合并改动。遗憾的是，这可能并非每次都成功，并可能出现冲突（conflicts）。 这时候就需要你修改这些文件来手动合并这些冲突（conflicts）。改完之后，你需要执行如下命令以将它们标记为合并成功
+
+	git add <filename>
+
+	git diff <source_branch> <target_branch>
+
+
+标签
+	
+	git tag 1.0.0 c3aacd472970c
+		创建一个1.0.0的标签,ID可由 git log获得
+
+
+替换本地变动
+	
+	git checkout -- <filename>
+	此命令会使用HEAD中的最新内容替换掉你工作目录中的目录，已经添加到暂存区的改动以及新文件都不会受到影响
+
+	丢弃在本地的所有改动和提交，在服务器上获取最新的版本历史，并在本地指向
+	git fetch origin 
+
+	git reset --heard origin/master
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
