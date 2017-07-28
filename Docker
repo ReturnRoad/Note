@@ -39,6 +39,10 @@ docker daemon -D -s overlay -g /var/lib/docker
 # 使用overlay驱动对Docker Image的组织结构进行分析，首先需要启动Docker Daemon
 docker pull busybox
 
+Docker容器后台运行,就必须有一个前台进程。主线程结束，容器会退出。
+sudo docker run -d centos 改成 sudo docker -dit centos 就行了。
+
+
 
 docker history busybox
 
@@ -66,6 +70,8 @@ Docker client
 	docker run -ti d --net=bridge -p :10000:22/tcp -h docker centos:latest bash
 	docker ps
 	docker exec -ti IMAGESID bash 	
+
+	docker logs CONTAINER_ID 		# 	查看容器的输出
 
 link的使用
 Host1	
@@ -392,12 +398,22 @@ docker run -d -p 80:80 --name wordpess -e WORDPRESS_DB_HOST=10.33.203.165 -e WOR
 docker tag csphere/csphere:0.11.2 10.255.43.181:5000/csphere/csphere:0.11.2 
 docker images 
 
+docker build -t debug . 		# 对Build过程进行调试
 
 
 
+Docker Repository 
 
+	docker login -u <user name> -p <password> -e <email> <registry domin>
+			# 使用docker用户登陆
 
+	docker push localhost:5000/official/ubuntu:14.04 
+			# 上传镜像到本地仓库
 
+	docker pull ubuntu:14.04 
+
+	docker search localhost:5000/ubuntu 	
+			# 查询镜像
 
 
 
@@ -556,6 +572,35 @@ while True:
 
 
 
+[root@main opt]# vim Dockerfile 
+
+# This file for centos 7
+# system base version 1
+# Author : tester
+
+FROM centos:latest
+
+MAINTAINER cheng cheng@whatever.com
+
+ENV TZ "Asiz/Shanghai"
+ENV TERM xterm
+
+#RUN rm -rf /etc/yum.repos.d/*
+
+#ADD epel.repo /etc/yum.repos.d/epel.repo
+#ADD CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo
+
+#RUN yum makecache fast
+RUN yum install iproute net-tools openssh openssh-server wget -y
+RUN yum groupinstall "Development Tools" -y
+RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -P ''
+RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_ecdsa_key -P ''
+RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_ed25519_key -P ''
+RUN echo '/usr/sbin/sshd -D' >> /etc/rc.d/rc.local
+
+CMD ["/usr/sbin/sshd" "-D"]
+
+EXPOSE 22
 
 
 

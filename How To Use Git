@@ -55,6 +55,8 @@ How To Use Git
 							查看当前分支
 	git branch -d new_feature
 							删除新分支
+	git branch -D new_feature
+							强制删除分支
 	git push origin <branch>
 							将分支推送到远端仓库，不然该分支就是不为他人所知的
 
@@ -110,5 +112,17 @@ git reset --hard HEAD_ID
 	git remote show origin 
 
 	git fetch -p 		# fetch之后删除没有与远程分支对应的本地分支
+
+
+存储当前工作现场
+	git stash 
+
+	git stash list 
+
+	git stash apply 	# 恢复之后需要使用 git stash drop 删除
+
+	git stash pop 		# 恢复时删除statsh内容
+
+	git stash apply stash@{0} 	# 安装List恢复制定的stash 
 
 

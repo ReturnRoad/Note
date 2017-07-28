@@ -57,8 +57,8 @@ linux 会使用硬盘的一部分做为SWAP分区，用来进行进程调度--�
 
 
 wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-
-
+wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
 
 
 yum install lrzsz 
