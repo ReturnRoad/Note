@@ -125,4 +125,43 @@ git reset --hard HEAD_ID
 
 	git stash apply stash@{0} 	# 安装List恢复制定的stash 
 
+远程仓库克隆
+	克隆时，Git会将本地的master分支和远程的master分支对应，远程仓库的默认名称是origin
+
+	git remote -v 		# 查看远程仓库的详细信息
+	origin  https://github.com/ReturnRoad/Note.git (fetch)
+	origin  https://github.com/ReturnRoad/Note.git (push)
+
+	# 如果没有推送权限就不会有push
+
+	git push origin master
+	git push origin dev 
+
+	git branch --set-upstream dev origin/dev 
+	# 设定本地dev分支与远程origin/dev分支的链接
+
+自定义Git
+	
+	git config color.status 
+
+	git config --global color.status auto
+
+	git config --global color.ui true 
+
+
+	忽略特殊字符文件
+		将.gitignore提交到Git
+		.gitignore 
+
+		# python
+		*.py 
+		*.so
+		*.ini
+		dist
+		build 
+
+		git add -f helloworld.py 		#强制添加到Git
+
+		git check-ignore -v helloworld.py 			# 检查gitignore文件
+
 
