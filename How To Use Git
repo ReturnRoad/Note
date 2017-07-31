@@ -34,8 +34,10 @@ How To Use Git
 		git add <filename>		# HEAD0
 		git add *.* 		
 		git add -i 			# 交互式添加文件
+		git add --all 
 
 推送改动
+
 	git commit -m "代码提交信息" 		#改动提交到HEAD
 
 	git push origin master			# 将改动提交到远端仓库
