@@ -1,0 +1,50 @@
+Install Mysql 5.7
+
+设置Mysql Git仓库
+
+	git clone https://github.com/mysql/mysql-server.git
+
+	git branch -r 			# 查看仓库中的分支
+
+	git checkout 5.5 		# 从中切换分支
+
+
+环境准备
+	导入依赖库
+
+		yum search libaio
+		yum install libaio
+
+	创建Mysql用户
+		groupadd mysql
+		useradd -r -g mysql -s /bin/false mysql 
+
+		tar xf mysql-VERSION.tar.gz 
+
+		cd mysql-VERSION.tar.gz 
+
+		mkdir bld
+
+		cd bld
+
+		cmake .. 
+
+		make 
+
+		make install 
+
+	安装完成后执行
+		cd /usr/local/mysql
+		chown -R mysql . 
+		chgrp -R mysql . 
+		bin/mysql_install_db --user=mysql  		# 在Mysql 5.7.6 版本之前
+		bin/mysqld --initialize --user=mysql 	 # Mysql 5.7.6 之后的版本
+		bin/mysql_ssl_rsa_setup 				  #  Mysql 5.7.6 之后的版本
+		chown -R root . 
+		chown -R mysql data 
+		bin/mysqld_safe --user=mysql & 
+
+	添加启动脚本
+		cp support-files/mysql.server /etc/init.d/mysql.server 
+
+oictpY<pM2h4

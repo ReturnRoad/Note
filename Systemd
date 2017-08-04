@@ -1,0 +1,302 @@
+Systemd  
+
+	systemd 基本工具
+
+	systemctl -H <username>@<hostname> 			# 实现对远程机器的控制，该功能使用SSH
+
+	systemctl status 
+
+	systemctl list-units
+	systemctl --failed
+
+	所有的可用单元存放在 /usr/lib/systemd/system/ 和 /etc/systemd/system/ 	后者的优先级更高
+
+	systemctl list-unit-files 			# 查看所有已安装的服务
+
+	使用单元 
+		系统服务 .service 
+		挂载点 .mount 
+		sockets .sockets 
+		系统设备	.device
+		交换分区	.swap
+		文件路径	.path
+		启动目标	.target
+		由systemd管理的计时器	.timer
+
+	如果无扩展名，systemctl 默认把扩展名当作 .service 。例如 netcfg 和 netcfg.service 是等价的。
+	挂载点会自动转化为相应的 .mount 单元。例如 /home 等价于 home.mount 。
+	设备会自动转化为相应的 .device 单元，所以 /dev/sda2 等价于 dev-sda2.device 。
+
+	name@string.service 		# 这是一个模板单元。string被称为实例标识符
+
+	systemctl enable|disable|mask --now <单元> 		# 实现激活的同时启动服务
+
+	systemctl daemon-reload			# 重新载入systemd
+
+	systemctl reboot 
+
+	systemctl poweroff
+
+	systemctl suspend 				# 待机
+
+	systemctl hibernate 			# 休眠
+
+	systemctl hybrid-sleep 			# 混合休眠到硬盘
+
+编写单元文件
+	
+	/usr/lib/systemd/system 		软件包安装的单元
+	/etc/systemd/system 		系统管理员安装的单元
+
+处理依赖关系
+	使用 systemd 时，可通过正确编写单元配置文件来解决其依赖关系。典型的情况是，单元 A 要求单元 B 在 A 启动之前运行。在此情况下，向单元 A 配置文件中的 [Unit] 段添加 Requires=B 和 After=B 即可。若此依赖关系是可选的，可添加  Wants=B 和 After=B 。请注意 Wants= 和 Requires= 并不意味着 After= ，即如果 After= 选项没有制定，这两个单元将被并行启动。required是强依赖,wants是弱依赖
+
+服务类型
+	
+	Type=simple 	systemd认为该服务将立即启动。服务进程不会 fork 。如果该服务要启动其他服务，不要使用此类型启动，除非该服务是socket 激活型。
+
+	Type=forking	systemd认为当该服务进程fork，且父进程退出后服务启动成功。对于常规的守护进程（daemon），除非你确定此启动方式无法满足需求，使用此类型启动即可。使用此启动类型应同时指定 PIDFile=，以便 systemd 能够跟踪服务的主进程。
+
+	Type=oneshot	这一选项适用于只执行一项任务、随后立即退出的服务。可能需要同时设置 RemainAfterExit=yes 使得 systemd 在服务进程退出之后仍然认为服务处于激活状态。
+
+	Type=notify		与 Type=simple 相同，但约定服务会在就绪后向 systemd 发送一个信号。这一通知的实现由 libsystemd-daemon.so 提供。
+
+	Type=dbus	若以此方式启动，当指定的 BusName 出现在DBus系统总线上时，systemd认为服务就绪。
+
+	Type=idle	systemd会等待所有任务处理完成后，才开始执行 idle 类型的单元。其他行为与 Type=simple 类似。
+
+编辑单元文件
+	为了避免与yum冲突，不应该直接编辑由软件包提供的文件，应创建名为 /etc/systemd/system/<单元名>.d/ 
+	如： /etc/systemd/syste/httpd.service.d/  然后放入*.conf 
+
+	/etc/systemd/system/<unit>.d/customdependency.conf
+	[Unit]
+	Requires=<新依赖>
+	After=<新依赖>
+
+	/etc/systemd/system/unit.d/customexec.conf
+	[Service
+	ExecStart=
+	ExecStart=new command
+
+	/etc/systemd/system/unit.d/restart.conf 		# 自动重启的例子
+	[Service]
+	Restart=always
+	RestartSec=30
+
+在/etc/systemd/system/目录中的单元文件的优先级总是高于/usr/lib/systemd/system/目录中的同名单元文件
+
+	systemd-delta 				# 查看哪些单元文件被覆盖，修改
+
+获取当前目标
+
+	systemctl list-units --type=target 
+
+Systemd运行级别
+
+	runlevel0.target,poweroff.target 			关闭系统
+	runlevel1.target,rescue.target				单用户模式
+	runlevel[2|4].target,runlevel4.target,multi-user.target		用户自定义
+	runlevel3.target,multi-user.target			多用户
+	runlevel5.target,graphical.target			图形化
+	emergency.target							紧急Shell
+
+切换运行级别/目标
+	
+	systemctl isolate graphical.target 
+
+	systemctl set-default multi-user.target  # -f 强制覆盖已经设置的default.target 
+
+临时文件
+	
+	/usr/lib/tmpfiles.d/
+	/etc/tmpfiles.d/
+
+	临时文件通常和服务文件同时提供，以生成守护进程需要的文件和目录。例如 Samba 服务需要目录 /run/samba 存在并设置正确的权限位
+
+	/usr/lib/tmpfiles.d/samba.conf
+	D /run/samba 0755 root root
+
+	此外，临时文件还可以用来在开机时向特定文件写入某些内容。比如，要禁止系统从USB设备唤醒，利用旧的 /etc/rc.local 可以用 echo USBE > /proc/acpi/wakeup，而现在可以这么做
+
+	/etc/tmpfiles.d/disable-usb-wake.conf
+	w /proc/acpi/wakeup - - - - USBE
+
+定时器单元 
+	Timers 是以 .timer 为后缀的 systemd 单元文件。Timers 和其他单元配置文件是类似的，它通过相同的路径加载，不同的是包含了 [Timer] 部分。 [Timer] 部分定义了何时以及如何激活定时事件。Timers 可以被定义成以下两种类型：
+
+		单调定时器 即从一个时间点过一段时间后激活定时任务。所有的单调计时器都遵循如下形式： OnTypeSec=。 OnBootSec 和 OnActiveSec 是常用的单调定时器。
+
+		实时定时器 (亦称"挂钟定时器") 通过日历事件激活（类似于 cronjobs ）定时任务。 使用 OnCalender= 来定义实时定时器
+
+	每个 .timer 文件所在目录都得有一个对应的 .service 文件（如 foo.timer 和 foo.service）。.timer 用于激活并控制 .service 文件。 .service 文件中不需要包含 [Install] 部分，因为这由 timer 单元接管。必要时通过在定时器的  [Timer] 部分指定 Unit= 选项来控制一个与定时器不同名的服务单元。
+
+	systemctl list-timers 			# --all 列出所有定时器，包括非活动的
+
+	单调定时器
+		定义一个在系统启动 15 分钟后执行，且之后每周都执行一次的定时器。
+		/etc/systemd/system/foo.timer
+		[Unit]
+		Description=Run foo weekly and on boot
+
+		[Timer]
+		OnBootSec=15min
+		OnUnitActiveSec=1w 
+
+		[Install]
+		WantedBy=timers.target
+
+	实时定时器
+		定义一个每周执行一次（明确时间为周一上午十二点）且上次未执行就立即执行的定时器。
+		/etc/systemd/system/foo.timer
+		[Unit]
+		Description=Run foo weekly
+
+		[Timer]
+		OnCalendar=weekly
+		Persistent=true     
+		 
+		[Install]
+		WantedBy=timers.target
+
+	发送邮件
+		/usr/local/bin/systemd-email
+			#!/bin/bash
+
+			/usr/bin/sendmail -t <<ERRMAIL
+			To: $1
+			From: systemd <root@$HOSTNAME>
+			Subject: $2
+			Content-Transfer-Encoding: 8bit
+			Content-Type: text/plain; charset=UTF-8
+
+			$(systemctl status --full "$2")
+			ERRMAIL
+
+		/etc/systemd/system/status-email-user1@.service
+			[Unit]
+			Description=status email for %I to user1
+
+			[Service]
+			Type=oneshot
+			ExecStart=/usr/local/bin/systemd-email user1@mailhost %i
+			User=nobody
+			Group=systemd-journal
+
+		# systemctl start status-email-user1@dbus.service 
+
+日志管理
+	
+	journalctl
+
+	/var/log/journal/	# 当Storage=auto在文件/etc/systemctl/journal.conf被设置
+
+	journalctl -b 			# 显示本次启动后的所有日志
+
+	journalctl -b -0 		本次 
+	journalctl -b -1 		上次
+	journalctl -b -2 		上上次
+
+	journalctl -p err..alert
+		只显示错误，冲突和重要告警信息
+
+	journalctl --since="2012-10-30 18:18:18"
+
+	journalctl --since "20 min age"
+
+	journalctl -f 		# 显示最新信息
+
+	journalctl /usr/lib/systemd/systemd 	# 显示特定程序的所有消息
+
+	journalctl _PID=1		# 显示特定进程的所有消息
+
+	journalctl -u netcfg	# 显示指定单元的所有消息
+
+	journalctl -k 			# 显示内核环缓存消息r
+
+	journalctl -f -l SYSLOG_FACILITY=10
+	# Show auth.log equivalent by filtering on syslog facility
+
+日志大小限制
+	默认日志最大限制为所在文件系统容量的10%
+
+	/etc/systemd/journald.conf
+		SystemMaxUse=50M
+
+	/etc/systemd/journald.conf.d/00-journal-size.conf
+		[Journal]
+		SystemMaxUse=50M 
+
+手动清理日志
+	/var/log/journal 
+
+	journalctl --vacuum-size=100M
+
+	journalctl --vacuum-time=2weeks
+
+
+
+
+
+
+
+
+
+  #cat /etc/system/system/sshd.service
+  [Unit]
+  Description=OpenSSH server daemon
+  [Service]
+  EnvironmentFile=/etc/sysconfig/sshd
+  ExecStartPre=/usr/sbin/sshd-keygen				# 定义启动服务之前应该运行的命令
+  ExecStart=/usrsbin/sshd –D $OPTIONS				# 定义启动服务的具体命令语法
+  ExecReload=/bin/kill –HUP $MAINPID			
+  KillMode=process
+  Restart=on-failure
+  RestartSec=42s
+  [Install]
+  WantedBy=multi-user.target				# 表明这个服务是在多用户模式下所需要
+
+
+  #cat multi-user.target
+  [Unit]
+  Description=Multi-User System
+  Documentation=man.systemd.special(7)
+  Requires=basic.target
+  Conflicts=rescue.service rescure.target
+  After=basic.target rescue.service rescue.target
+  AllowIsolate=yes
+  [Install]
+  Alias=default.target			# 定义本单元的别名
+
+
+	#cat sys-kernel-debug.mount
+	[Unit]
+	Description=Debug File Syste
+	DefaultDependencies=no
+	ConditionPathExists=/sys/kernel/debug
+	Before=sysinit.target
+	[Mount]
+	What=debugfs
+	Where=/sys/kernel/debug
+	Type=debugfs
+
+# [Mount] 相当于 
+	mount -t debugfs /sys/kernel/debug debugfs 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

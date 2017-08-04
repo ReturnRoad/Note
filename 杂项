@@ -162,3 +162,53 @@ rz
 					dcpromo
 					gpedit.msc
 					
+
+
+CentOS 7 大量 rcuos 和 rcuob 进程
+方法1
+	vim /etc/default/grub 
+		GRUB_CMDLINE_LINUX 		添加 nr_cpus2 
+
+		grub2-mkconfig -o /boot/grub2/grub.cfg
+方法2
+	yum install kernel -y
+
+
+CONFIG_RCU_NOCB_CPU
+CONFIG_RCU_NOCB_CPU_ALL
+CONFIG_RCU_STALL_COMMON
+CONFIG_RCU_USER_QS
+
+内核线程，每个CPU对应一个rcuob和rcuos,几乎不占用内存
+
+
+
+系统信息查看
+
+	cat /proc/meminfo
+	cat /proc/stat cpu
+	cat /proc/loadavg
+	cat /proc/net/dev
+	top 
+
+
+
+
+
+mysqld_safe --skip-grant-tables &
+
+mysqld_safe --skip-grant-tables --skip-networking &
+
+alter user 'root'@'localhost' identifiedy by '123...';
+set password for 'root'@'localhost'=password('123...');
+
+use mysql
+
+update user set password=PASSWORD("123...") where user='root';
+flush privileges;
+
+ update mysql.user set authentication_string=password('123qwe') where user='root' and Host = 'localhost';
+
+
+
+cat /root/.mysql_secret
